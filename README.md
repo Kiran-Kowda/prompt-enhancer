@@ -114,5 +114,5 @@ If you encounter any issues or have questions:
 3. Reach out to the maintainers
 
 
-✨ Crafted with 🪄 Magic and 🤗 Love by Karthik ✨
+✨ Crafted with 🪄 Magic and 🤗 Love by Kiran Kowda ✨
 
