@@ -1,6 +1,7 @@
 # Import required libraries
 import streamlit as st
-from google.generativeai import GenerativeModel, configure
+import streamlit_ext as stx
+from google.generativeai import GenerativeModel, configure, errors
 import time
 from datetime import datetime, timedelta
 
@@ -11,6 +12,12 @@ if 'last_request_time' not in st.session_state:
     st.session_state.last_request_time = datetime.min
 if 'request_count' not in st.session_state:
     st.session_state.request_count = 0
+
+# Initialize session state for UI elements
+if 'prompt_input' not in st.session_state:
+    st.session_state.prompt_input = ""
+if 'enhanced_prompt_content' not in st.session_state:
+    st.session_state.enhanced_prompt_content = ""
 
 # Configure Streamlit page settings
 # - Sets page title with emoji
@@ -118,13 +125,25 @@ with st.sidebar:
 
 # Main Content Section
 # Text area for user to input their prompt
-prompt = st.text_area("Enter your prompt:", height=150)
+st.text_area("Enter your prompt:", height=150, key="prompt_input")
 
-# Enhancement Button and Processing
-# - Disabled when API key, prompt, or techniques are missing
-# - Implements rate limiting
-# - Handles API interaction and response
-if st.button("✨ Enhance Prompt", disabled=not (api_key and prompt and selected_techniques)):
+# Buttons Layout
+col1, col2 = st.columns([3, 1])  # Adjust ratio as needed
+
+with col1:
+    enhance_clicked = st.button(
+        "✨ Enhance Prompt",
+        disabled=not (api_key and st.session_state.prompt_input and selected_techniques),
+        use_container_width=True
+    )
+with col2:
+    if st.button("🧹 Clear Fields", use_container_width=True):
+        st.session_state.prompt_input = ""
+        st.session_state.enhanced_prompt_content = ""
+        st.experimental_rerun()
+
+# Enhancement Button Processing
+if enhance_clicked:
     # Rate Limiting Logic
     # Prevents excessive API calls by:
     # - Enforcing 2-second delay between requests
@@ -145,14 +164,14 @@ if st.button("✨ Enhance Prompt", disabled=not (api_key and prompt and selected
             # - Handles response and displays enhanced prompt
             with st.spinner("✨ Weaving magical enhancements..."):
                 configure(api_key=api_key)
-                model = GenerativeModel(model_name="gemini-2.0-pro-exp-02-05")
+                model = GenerativeModel(model_name="gemini-1.0-pro")
                 
                 # Construct context for the AI model
                 prompt_context = f"""
                 As an AI prompt engineer, enhance the following prompt to be more effective and clear.
                 Apply these specific techniques: {', '.join(selected_techniques)}.
                 
-                Original prompt: "{prompt}"
+                Original prompt: "{st.session_state.prompt_input}"
                 
                 Please provide an enhanced version that incorporates all selected techniques while maintaining the core intent of the original prompt.
                 Just give only the enhanced prompt no explanation.
@@ -160,8 +179,7 @@ if st.button("✨ Enhance Prompt", disabled=not (api_key and prompt and selected
                 
                 # Get and display enhanced prompt
                 response = model.generate_content(prompt_context)
-                st.markdown("### ✨ Enhanced Prompt:")
-                st.text_area("", value=response.text, height=150, disabled=True)
+                st.session_state.enhanced_prompt_content = response.text
                 
                 # Update rate limiting trackers
                 st.session_state.last_request_time = current_time
@@ -170,11 +188,27 @@ if st.button("✨ Enhance Prompt", disabled=not (api_key and prompt and selected
                 # Reset counter after one minute
                 if time_diff.total_seconds() >= 60:
                     st.session_state.request_count = 0
-                
+
+        except errors.PermissionDeniedError as e:
+            st.error(f"🪄 Magic Words Mispronounced! It seems there's an issue with your API key or permissions. Please double-check it. Details: {e}")
+        except errors.ResourceExhaustedError as e:
+            st.error(f"✨ Magic Overload! You've exceeded your Gemini API quota. Please check your usage and limits. Details: {e}")
+        except errors.InvalidArgumentError as e:
+            st.error(f"🤔 Hmm, that's an odd request! The input seems invalid. Please check the prompt and try again. Details: {e}")
         except Exception as e:
-            # Error handling for API issues
-            st.error("🎭 Oops! The magic encountered a hiccup. Please check your API key and try again.")
-            st.exception(e)
+            # General error handling for API issues
+            st.error("🎭 Oops! The magic encountered an unknown hiccup. Please try again. If the problem persists, check the console for more details.")
+            st.exception(e) # Keep this for detailed logs in the console
+
+# Displaying the enhanced prompt (outside the enhance_clicked block, so it persists)
+if st.session_state.enhanced_prompt_content: # Only display if there's content
+    st.markdown("### ✨ Enhanced Prompt:")
+    st.text_area("", value=st.session_state.enhanced_prompt_content, height=150, disabled=True, key="enhanced_prompt_display_area")
+    stx.copy_button(
+        text_to_copy=st.session_state.enhanced_prompt_content,
+        label="📋 Copy Enhanced Prompt",
+        success_message="Prompt copied to clipboard!"
+    )
 
 # Footer section with credits
 st.markdown("---")
