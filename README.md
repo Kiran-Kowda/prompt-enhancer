@@ -12,6 +12,8 @@ A magical tool that transforms your prompts into more effective and powerful ver
 - ⚡️ Powered by Google's Gemini AI
 - 🛡️ Built-in Rate Limiting Protection
 - 🎨 Intuitive User Interface
+- ✨ Clear Fields button for easy resetting
+- 📋 Copy to Clipboard for enhanced prompts
 
 ## 🚀 Getting Started
 
@@ -84,6 +86,8 @@ streamlit run app.py
 - Real-time feedback
 - Beautiful animations
 - User-friendly error messages
+- 🧹 Handy "Clear Fields" button to reset inputs
+- 📋 Convenient "Copy to Clipboard" for easy sharing of enhanced prompts
 
 ## 📝 Technical Details
 
