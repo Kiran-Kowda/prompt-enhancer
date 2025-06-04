@@ -1,6 +1,6 @@
 # Import required libraries
 import streamlit as st
-import streamlit_ext as stx
+from streamlit_extras.clipboard import copy_button
 from google.generativeai import GenerativeModel, configure, errors
 import time
 from datetime import datetime, timedelta
@@ -204,7 +204,7 @@ if enhance_clicked:
 if st.session_state.enhanced_prompt_content: # Only display if there's content
     st.markdown("### ✨ Enhanced Prompt:")
     st.text_area("", value=st.session_state.enhanced_prompt_content, height=150, disabled=True, key="enhanced_prompt_display_area")
-    stx.copy_button(
+    copy_button(
         text_to_copy=st.session_state.enhanced_prompt_content,
         label="📋 Copy Enhanced Prompt",
         success_message="Prompt copied to clipboard!"
